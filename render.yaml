@@ -21,5 +21,6 @@ services:
       - key: TRUST_PROXY
         value: "1"
       - key: CLIENT_URL
-        value: https://portfolio-cms-j40t.onrender.com
+        value: https://4aru5h.in,https://www.4aru5h.in,https://portfolio-cms-j40t.onrender.com
+
 
