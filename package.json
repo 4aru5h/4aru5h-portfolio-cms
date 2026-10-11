@@ -4,7 +4,7 @@
   "description": "Full-stack portfolio CMS",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install --include=dev",
     "server": "cd server && npm run dev",
     "client": "cd client && npm run dev",
     "test": "cd server && npm test",
