@@ -18,6 +18,14 @@ validateConfig();
 // Initialize database schema & migrations
 initializeDatabase();
 
+// Auto-seed default portfolio content if database is brand new (non-destructive)
+try {
+  const { seedDatabase } = require('./database/seed');
+  seedDatabase();
+} catch (err) {
+  console.warn('Auto-seed check skipped or encountered issue:', err.message);
+}
+
 // Bootstrap initial admin if credentials exist in .env and table is empty
 ensureAdminUser().catch((err) => {
   console.warn('Admin user auto-initialization skipped or encountered issue:', err.message);
