@@ -7,7 +7,7 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 const fs = require('fs');
 
-const { config, validateConfig } = require('./config');
+const { config, validateConfig, isAllowedOrigin } = require('./config');
 const { initializeDatabase } = require('./database/schema');
 const { ensureAdminUser } = require('./auth/admin');
 const { csrfProtection } = require('./middleware/csrf');
@@ -68,15 +68,15 @@ app.use(helmet({
 }));
 
 // CORS Configuration
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (config.allowedOrigins.some(o => o.toLowerCase() === origin.toLowerCase())) {
-      return callback(null, true);
-    }
-    callback(new Error('CORS origin not allowed: ' + origin));
-  },
-  credentials: true
+app.use(cors((req, callback) => {
+  const origin = req.get('origin');
+  if (!origin) {
+    return callback(null, { origin: false });
+  }
+  if (isAllowedOrigin(origin, req)) {
+    return callback(null, { origin: true, credentials: true });
+  }
+  callback(new Error('CORS origin not allowed: ' + origin));
 }));
 
 // Body Parsing with sensible payload limits

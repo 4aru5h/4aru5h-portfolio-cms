@@ -26,11 +26,15 @@ function parseOrigins(value) {
     'http://localhost:5000',
     'http://127.0.0.1:5000'
   ] : [];
-  const configured = (value || 'http://localhost:5173')
+  const origins = [...localDevOrigins];
+  if (process.env.RENDER_EXTERNAL_URL) {
+    origins.push(process.env.RENDER_EXTERNAL_URL.trim().replace(/\/+$/, ''));
+  }
+  const configured = (value || (!isProduction ? 'http://localhost:5173' : ''))
     .split(',')
     .map((origin) => origin.trim().replace(/\/+$/, ''))
     .filter(Boolean);
-  return Array.from(new Set([...localDevOrigins, ...configured]));
+  return Array.from(new Set([...origins, ...configured]));
 }
 
 function parseTrustProxy(value) {
@@ -97,4 +101,51 @@ function validateConfig(cfg = config) {
   return cfg;
 }
 
-module.exports = { config, validateConfig };
+/**
+ * Checks if an incoming Origin header is allowed via:
+ * 1. Explicitly configured origins (CLIENT_URL, localhost in dev, etc.)
+ * 2. Render external URL (RENDER_EXTERNAL_URL)
+ * 3. Same-origin matching against incoming host header (self-hosted client)
+ */
+function isAllowedOrigin(origin, req) {
+  if (!origin) return true;
+
+  const normalizedOrigin = origin.trim().replace(/\/+$/, '').toLowerCase();
+
+  // 1. Explicitly configured allowed origins
+  if (config.allowedOrigins.some(o => o.toLowerCase().replace(/\/+$/, '') === normalizedOrigin)) {
+    return true;
+  }
+
+  // 2. Render-provided external URL
+  if (process.env.RENDER_EXTERNAL_URL) {
+    const renderUrl = process.env.RENDER_EXTERNAL_URL.trim().replace(/\/+$/, '').toLowerCase();
+    if (renderUrl === normalizedOrigin) {
+      return true;
+    }
+  }
+
+  // 3. Same-origin match: if origin host matches current request host (self-hosted frontend)
+  if (req) {
+    try {
+      const originUrl = new URL(origin);
+      const hostHeader = req.get('x-forwarded-host') || req.get('host') || '';
+      const incomingHost = hostHeader.split(',')[0].trim().toLowerCase();
+      if (incomingHost) {
+        if (originUrl.host.toLowerCase() === incomingHost) {
+          return true;
+        }
+        if (originUrl.hostname.toLowerCase() === incomingHost.split(':')[0]) {
+          return true;
+        }
+      }
+    } catch {
+      // Malformed origin URL
+    }
+  }
+
+  return false;
+}
+
+module.exports = { config, validateConfig, isAllowedOrigin };
+

@@ -180,3 +180,27 @@ test('CSRF token provisioning & login session lifecycle', async () => {
   });
   assert.equal(postLogoutRes.status, 401);
 });
+
+test('CORS origin handling and same-origin validation', async () => {
+  // 1. Same-origin request (matching server host) is allowed
+  const allowedRes = await fetch(`${baseUrl}/api/content`, {
+    headers: { 'Origin': baseUrl }
+  });
+  assert.equal(allowedRes.status, 200);
+  assert.equal(allowedRes.headers.get('access-control-allow-origin'), baseUrl);
+
+  // 2. Explicitly configured client origin (http://localhost:5173) is allowed
+  const configuredRes = await fetch(`${baseUrl}/api/content`, {
+    headers: { 'Origin': 'http://localhost:5173' }
+  });
+  assert.equal(configuredRes.status, 200);
+  assert.equal(configuredRes.headers.get('access-control-allow-origin'), 'http://localhost:5173');
+
+  // 3. Untrusted origin is rejected with 403
+  const forbiddenRes = await fetch(`${baseUrl}/api/content`, {
+    headers: { 'Origin': 'https://evil-hacker.com' }
+  });
+  assert.equal(forbiddenRes.status, 403);
+  const data = await forbiddenRes.json();
+  assert.ok(data.error.includes('CORS origin not allowed'));
+});

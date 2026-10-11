@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { config } = require('../config');
+const { config, isAllowedOrigin } = require('../config');
 
 /**
  * Standard CSRF protection using synchronizer tokens & Origin verification.
@@ -33,7 +33,7 @@ function csrfProtection(req, res, next) {
   // Check Origin / Referer for strict same-origin/whitelisted origin verification
   const origin = req.get('origin');
   if (origin) {
-    const isAllowed = config.allowedOrigins.some(allowed => origin.toLowerCase() === allowed.toLowerCase());
+    const isAllowed = isAllowedOrigin(origin, req);
     if (!isAllowed) {
       return res.status(403).json({ error: 'Invalid or untrusted origin' });
     }

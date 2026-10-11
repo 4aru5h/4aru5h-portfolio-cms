@@ -20,3 +20,6 @@ services:
         value: "true"
       - key: TRUST_PROXY
         value: "1"
+      - key: CLIENT_URL
+        value: https://portfolio-cms-j40t.onrender.com
+
