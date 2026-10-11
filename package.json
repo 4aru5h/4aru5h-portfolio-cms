@@ -1,0 +1,21 @@
+{
+  "name": "4aru5h-portfolio-cms",
+  "version": "1.0.0",
+  "description": "Full-stack portfolio CMS",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm run dev",
+    "test": "cd server && npm test",
+    "build": "cd client && npm run build",
+    "lint": "cd client && npm run lint",
+    "db:init": "cd server && npm run db:init",
+    "db:backup": "cd server && npm run db:backup",
+    "setup": "cd server && npm run setup",
+    "admin:reset": "cd server && npm run admin:reset"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

@@ -1,0 +1,144 @@
+================================================================================
+4ARU5H PORTFOLIO CMS — LOCAL WINDOWS STARTUP & OPERATIONAL GUIDE
+================================================================================
+
+1. PREREQUISITES & SUPPORTED VERSIONS
+--------------------------------------------------------------------------------
+- Windows 10 or Windows 11 (64-bit)
+- Node.js 18.0.0 or higher (Verified on Node.js v22.14.0)
+- npm 9.0.0 or higher (Verified on npm 10.9.2)
+- PowerShell (built into Windows) or Git Bash
+
+
+2. HOW TO OPEN THE PROJECT DIRECTORY
+--------------------------------------------------------------------------------
+1. Open PowerShell (Press Win + X and select "Terminal" or "PowerShell").
+2. Navigate to the project directory:
+   cd "C:\Users\iamaa\Desktop\4aru5h-portfolio-cms"
+
+
+3. INSTALLING DEPENDENCIES
+--------------------------------------------------------------------------------
+Install dependencies for root, backend, and frontend with a single command:
+   npm run install:all
+
+Or manually in separate steps:
+   npm install
+   cd server && npm install
+   cd ..\client && npm install
+   cd ..
+
+
+4. CONFIGURING ENVIRONMENT VARIABLES
+--------------------------------------------------------------------------------
+1. Copy the example environment template to create your local .env file:
+   Copy-Item .env.example .env
+
+2. Edit .env with your configuration:
+   PORT=5000
+   NODE_ENV=development
+   SESSION_SECRET=a-secure-random-string-at-least-32-chars
+   ADMIN_USERNAME=admin
+   ADMIN_PASSWORD=AM5landing742762
+   CLIENT_URL=http://localhost:5173
+
+NOTE: Never commit .env to Git or version control. It is listed in .gitignore.
+
+
+5. INITIALIZING THE DATABASE & ADMIN PASSWORD
+--------------------------------------------------------------------------------
+1. Run migrations and database initialization:
+   npm run db:init
+   (Safe to run repeatedly; will not overwrite existing CMS data)
+
+2. Synchronize / Reset administrator password from .env:
+   npm run admin:reset
+   (Converts ADMIN_PASSWORD into a salted bcrypt hash, cost factor 12)
+
+
+6. STARTING THE DEVELOPMENT SERVERS
+--------------------------------------------------------------------------------
+To start both the Express backend and the Vite React frontend simultaneously:
+   npm run dev
+
+To start them separately in individual terminal windows:
+   - Terminal 1 (Backend API):
+     npm run server
+   - Terminal 2 (Frontend Client):
+     npm run client
+
+
+7. LOCAL URLS & PORTS
+--------------------------------------------------------------------------------
+- Public Portfolio Website:   http://localhost:5173
+- Admin Login Portal:         http://localhost:5173/admin/login
+- CMS Admin Dashboard:        http://localhost:5173/admin
+- Backend REST API:           http://localhost:5000/api
+- API Health Check:           http://localhost:5000/api/health
+
+
+8. LOGGING IN AND TESTING FUNCTIONALITY
+--------------------------------------------------------------------------------
+1. Open http://localhost:5173/admin/login in your browser.
+2. Sign in with credentials:
+   - Username: admin
+   - Password: AM5landing742762
+3. You will be redirected to the Admin Overview dashboard (/admin).
+4. Make a test change:
+   - Go to "Website Text" or "Skills Manager".
+   - Edit an item or add a skill, then click Save.
+   - Open http://localhost:5173 in a separate tab to verify the instant update.
+
+
+9. RUNNING TESTS & LINTING
+--------------------------------------------------------------------------------
+1. Backend automated security & integration tests:
+   npm test
+   (Executes native node:test suite covering auth, CSRF, rate-limits, and CRUD)
+
+2. Frontend ESLint validation:
+   npm run lint
+
+3. Production frontend build:
+   npm run build
+
+
+10. STOPPING THE DEVELOPMENT SERVERS
+--------------------------------------------------------------------------------
+- In the active PowerShell terminal running `npm run dev`, press Ctrl + C.
+- Type 'Y' when prompted to terminate batch job and press Enter.
+
+
+11. DATABASE BACKUPS
+--------------------------------------------------------------------------------
+To create a safe, online SQLite backup while the server is running:
+   npm run db:backup
+Backups are saved to: database\backups\portfolio-<timestamp>.db
+
+
+12. COMMON TROUBLESHOOTING STEPS
+--------------------------------------------------------------------------------
+- Port 5000 already in use:
+  Change PORT=5001 in .env and update client\vite.config.js proxy target.
+
+- Port 5173 already in use:
+  Vite will automatically pick port 5174. If so, update CLIENT_URL in .env
+  to match the new port for CORS and CSRF origin verification.
+
+- Login says "Invalid credentials":
+  Run `npm run admin:reset` to re-hash the password set in your .env file.
+
+- "Too many login attempts":
+  The security rate limiter limits failed attempts to 5 per 15 minutes.
+  Wait 15 minutes or temporarily restart the backend server in dev.
+
+
+13. FILES & SECRETS TO NEVER COMMIT TO GIT
+--------------------------------------------------------------------------------
+- .env (Contains real passwords and secrets)
+- database/*.db (Database files)
+- database/backups/ (Database backups)
+- node_modules/ (Dependencies)
+- client/dist/ (Build artifacts)
+- uploads/ (User uploaded media)
+================================================================================

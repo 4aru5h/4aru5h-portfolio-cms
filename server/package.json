@@ -1,0 +1,33 @@
+{
+  "name": "portfolio-cms-server",
+  "version": "1.0.0",
+  "description": "Backend API for Portfolio CMS",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "test": "node --test tests/auth-api.test.js",
+    "db:init": "node database/init.js",
+    "db:backup": "node database/backup.js",
+    "setup": "node database/setup-admin.js",
+    "admin:reset": "node database/reset-admin-password.js"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^13.0.3",
+    "connect-sqlite3": "^0.9.15",
+    "cors": "^2.8.5",
+    "dompurify": "^3.1.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.2.0",
+    "express-session": "^1.18.0",
+    "helmet": "^7.1.0",
+    "isomorphic-dompurify": "^3.19.0",
+    "jsdom": "^24.0.0",
+    "marked": "^12.0.2",
+    "multer": "^1.4.5-lts.1",
+    "slugify": "^1.6.6"
+  }
+}
