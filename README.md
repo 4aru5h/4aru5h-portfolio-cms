@@ -1,138 +1,179 @@
-# 4aru5h Portfolio & CMS — Production-Ready Architecture
+# 4aru5h Portfolio CMS
 
-A full-stack, cybersecurity-themed personal portfolio website and Content Management System (CMS) featuring a React/Vite frontend and an Express/SQLite-powered backend.
+A personal portfolio website with a built-in content management system (CMS), allowing the site owner to manage portfolio content through an admin dashboard.
 
----
+**Live Website:** [https://4aru5h.in](https://4aru5h.in)  
+**Repository:** [https://github.com/4aru5h/4aru5h-portfolio-cms](https://github.com/4aru5h/4aru5h-portfolio-cms)
 
-## Technical Architecture
+## Features
 
-- **Frontend:** React 18, Vite 5, React Router 6, custom cybersecurity theme, accessible command palette, interactive terminal CTF challenge.
-- **Backend:** Node.js, Express 4, SQLite via `better-sqlite3`, synchronous WAL-mode connection.
-- **Session & Security:**
-  - `express-session` with SQLite-backed session store (`connect-sqlite3`).
-  - Session Fixation protection via `req.session.regenerate()`.
-  - CSRF synchronization tokens (`X-CSRF-Token`) + strict origin validation.
-  - Salted bcrypt password hashing (cost factor 12) with transparent re-hashing.
-  - Constant-time password verification to prevent username enumeration timing attacks.
-  - Multi-tier rate limiting for login authentication and public API endpoints.
-  - Strict Content Security Policy (CSP), HTTP security headers via Helmet.
-  - URL sanitization protecting against `javascript:`/`vbscript:` XSS vectors.
+- **Portfolio Website** — Responsive personal portfolio for showcasing skills, projects, certifications, and other information.
+- **Admin Dashboard** — Manage supported website content without manually editing source files.
+- **Content Management** — Update portfolio details and publish blog posts, where supported by the current implementation.
+- **Authentication** — Password-based admin authentication with hashed passwords.
+- **Security Controls** — Helmet security headers, rate limiting, CSRF protection, origin validation, and secure session handling.
+- **Database** — SQLite storage for application data.
+- **Production Deployment** — Express can serve the built frontend, allowing the application to run as a single service.
 
----
+## Tech Stack
 
-## Quick Start (Development)
+### Frontend
+- React
+- Vite
+- React Router
 
-### 1. Prerequisites
-- Node.js `18.0.0` or higher (tested on Node v22.14.0)
-- npm `9.0.0` or higher
+### Backend
+- Node.js
+- Express.js
+- SQLite (`better-sqlite3`)
 
-### 2. Installation
-Clone or open the repository directory:
+### Security
+- bcrypt
+- express-session
+- Helmet
+- CSRF protection
+- Rate limiting
+- SQLite-backed session storage
+
+## Project Structure
+
+```text
+4aru5h-portfolio-cms/
+├── client/             # React frontend
+├── server/             # Express backend and API
+├── package.json        # Root scripts
+├── .env.example        # Environment variable template
+└── README.md
+```
+
+## Getting Started
+
+### Prerequisites
+
+Install:
+- Node.js
+- npm
+- Git
+
+### 1. Clone the repository
+
 ```bash
+git clone https://github.com/4aru5h/4aru5h-portfolio-cms.git
 cd 4aru5h-portfolio-cms
+```
+
+### 2. Install dependencies
+
+```bash
 npm run install:all
 ```
 
-### 3. Environment Configuration
-Copy `.env.example` to `.env` in the root folder:
-```bash
-# Windows PowerShell:
-Copy-Item .env.example .env
+### 3. Configure environment variables
 
-# Bash / Linux:
-cp .env.example .env
+Create the required environment configuration using `.env.example` as a reference. Configure the variables required by the backend, including:
+
+- Admin credentials
+- Session secret
+- Database path
+- Production configuration
+
+**Never commit real passwords, session secrets, API keys, or other sensitive values to Git.**
+
+Use strong, unique credentials for the admin account.
+
+### 4. Start the application
+
+Follow the development scripts defined in the root and server `package.json` files. The backend can be started with:
+
+```bash
+cd server
+npm start
 ```
-Ensure `.env` contains:
+
+If the frontend runs separately during development, start it using the appropriate script in `client/package.json`.
+
+## Production Build
+
+Build the frontend from the project root:
+
+```bash
+npm run build
+```
+
+For a single-service deployment, configure the backend to serve the generated frontend build using:
+
 ```env
-PORT=5000
-NODE_ENV=development
-SESSION_SECRET=a-secure-random-string-at-least-32-characters
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=AM5landing742762
-CLIENT_URL=http://localhost:5173
+SERVE_CLIENT=true
 ```
 
-### 4. Database Setup & Non-Destructive Initialization
-```bash
-# Runs migrations safely; seeds only if the database is uninitialized
-npm run db:init
+Set this variable in the production environment rather than relying on development defaults.
 
-# Optional: To reset or re-sync admin password from .env
-npm run admin:reset
-```
+## Deployment on Render
 
-### 5. Running Development Servers
-```bash
-# Starts both Express (:5000) and Vite (:5173) concurrently
-npm run dev
-```
+This project can be deployed as a **Render Web Service**.
 
-- Public Portfolio: [http://localhost:5173](http://localhost:5173)
-- CMS Login: [http://localhost:5173/admin/login](http://localhost:5173/admin/login)
-- Admin Dashboard: [http://localhost:5173/admin](http://localhost:5173/admin)
+### Recommended configuration
+
+- **Build command:** `npm run install:all && npm run build`
+- **Start command:** `cd server && npm start`
+- **Persistent disk:** Configure a persistent disk for SQLite data.
+- **Database path:** Set `DATABASE_PATH` to a location on the persistent disk.
+- **Frontend serving:** Set `SERVE_CLIENT=true`.
+- **Environment variables:** Configure production credentials and secrets in the Render dashboard.
+
+Check the application's configuration and startup scripts before deploying to confirm that the build and start commands match the current repository.
+
+### Important deployment notes
+
+- SQLite data may be lost during redeploys or restarts if it is stored outside persistent storage.
+- Use a strong production session secret.
+- Never use default or example credentials on a public deployment.
+- Verify cookie settings, HTTPS, CSRF protection, and allowed origins in production.
+- Test admin login, content updates, and session persistence after deployment.
+
+## Security
+
+Security is an important part of this project. The backend includes several protections, such as:
+
+- Password hashing
+- Session-based authentication
+- CSRF protection
+- Rate limiting
+- Helmet security headers
+- Content Security Policy
+- Origin validation
+
+These controls reduce risk but do not guarantee that the application is free from vulnerabilities.
+
+**Before deploying:**
+1. Remove real credentials from documentation and source control.
+2. Rotate any credentials or secrets that may have been exposed.
+3. Store production secrets in Render environment variables.
+4. Keep dependencies updated.
+5. Test authentication, authorization, and session behavior.
+6. Confirm that administrative API routes cannot be accessed without proper authentication.
+
+## Development
+
+Frontend dependencies and scripts are defined in `client/package.json`. Backend dependencies and scripts are defined in `server/package.json`.
+
+For development commands, refer to those files and the root `package.json`.
+
+## Future Improvements
+
+Potential improvements include:
+
+- More flexible portfolio content management
+- Improved mobile usability
+- Richer project and certification sections
+- Blog editing and publishing improvements
+- Automated testing and deployment checks
+- Additional security testing
+
+## License
+
+Unless a license file is included in this repository, all rights are reserved by the repository owner. Contact the owner before redistributing or reusing the project.
 
 ---
 
-## Available Scripts
-
-| Command | Action |
-|---|---|
-| `npm run dev` | Runs both backend and frontend development servers concurrently. |
-| `npm run server` | Starts Express backend in dev mode (`node --watch`). |
-| `npm run client` | Starts Vite frontend dev server. |
-| `npm run build` | Builds the React frontend into `client/dist`. |
-| `npm run lint` | Runs ESLint validation across frontend codebase. |
-| `npm test` | Executes backend security, CSRF, and API integration tests. |
-| `npm run db:init` | Runs database migrations and seeds initial records if empty. |
-| `npm run db:backup` | Creates an online timestamped SQLite backup in `database/backups/`. |
-| `npm run setup` | Creates initial admin user if not already present. |
-| `npm run admin:reset` | Resets admin password to the value configured in `.env`. |
-
----
-
-## Security Hardening Details
-
-1. **Password Storage & Transmission:**
-   - Passwords are never committed or hardcoded in source files.
-   - Verified on server exclusively; hashed with salted bcrypt (cost factor 12).
-   - Login responses never return password hashes, session IDs, or private internal errors.
-2. **Session Handling:**
-   - Session cookies are configured with `HttpOnly: true`, `SameSite: strict` (production) / `lax` (development), and `Secure: true` in production.
-   - Sessions regenerate upon successful login to prevent fixation attacks.
-3. **Cross-Site Request Forgery (CSRF):**
-   - Public GET routes remain accessible without CSRF friction.
-   - All state-changing CMS operations (`POST`, `PUT`, `DELETE`) require a valid `X-CSRF-Token` header matching the active session token.
-4. **Rate Limiting:**
-   - Authentication endpoint (`/api/auth/login`) is strictly rate-limited to 5 attempts per 15 minutes per IP.
-   - Public API endpoints are guarded with a 600 req / 15 min bucket.
-5. **Database Protection:**
-   - `npm run db:init` is non-destructive by default.
-   - Schema versioning tracks migrations safely.
-
----
-
-## Public Deployment Guide
-
-### Option A: Single Node.js Container / VPS / Host (Railway, Render, DigitalOcean, VPS)
-1. Build the frontend during deployment:
-   ```bash
-   npm run install:all
-   npm run build
-   ```
-2. Set Environment Variables in your hosting dashboard:
-   - `NODE_ENV=production`
-   - `PORT=5000` (or provided port)
-   - `SESSION_SECRET=<random-32+-char-secret>`
-   - `CLIENT_URL=https://your-domain.com`
-   - `TRUST_PROXY=1` (if behind Cloudflare, Nginx, or hosting load balancer)
-   - `SERVE_CLIENT=true` (enables Express to serve `client/dist` directly as a Single Page Application)
-   - `DATABASE_PATH=/persistent-volume/portfolio.db` (mount a persistent disk so SQLite data persists across redeployments)
-3. Start command:
-   ```bash
-   cd server && npm start
-   ```
-
-### Option B: Decoupled (Vercel/Netlify Frontend + Render/Railway Backend)
-1. Host frontend on Vercel/Netlify with output directory `client/dist`.
-2. Configure `CLIENT_URL=https://your-frontend-domain.com` on the backend.
-3. Configure API proxy or base URL pointing to the backend domain with `credentials: 'include'`.
+**Built and maintained by 4aru5h.**
