@@ -1,5 +1,15 @@
 # 4aru5h Portfolio & Content Management System
 
+<p align="left">
+  <img src="https://github.com/4aru5h/4aru5h-portfolio-cms/actions/workflows/ci.yml/badge.svg" alt="CI Suite" />
+  <img src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black" alt="React 18" />
+  <img src="https://img.shields.io/badge/Node.js-20-339933?logo=node.js&logoColor=white" alt="Node.js 20" />
+  <img src="https://img.shields.io/badge/Express-4-000000?logo=express&logoColor=white" alt="Express" />
+  <img src="https://img.shields.io/badge/Database-SQLite%20%2F%20PostgreSQL-4169E1?logo=postgresql&logoColor=white" alt="Database" />
+  <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License" />
+</p>
+
+
 A production personal portfolio website with an integrated content management system (CMS), enabling administrative content management through a secured admin dashboard without manual code deployments.
 
 - **Live Production Site:** [4aru5h.in](https://4aru5h.in)

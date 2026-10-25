@@ -1,0 +1,38 @@
+name: CI Suite
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-build:
+    name: Backend Tests & Frontend Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Install server dependencies
+        working-directory: ./server
+        run: npm install
+
+      - name: Run Backend Auth & Security Tests
+        working-directory: ./server
+        run: npm test
+
+      - name: Install client dependencies & build
+        working-directory: ./client
+        run: |
+          npm install
+          npm run build
