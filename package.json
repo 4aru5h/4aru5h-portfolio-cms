@@ -16,6 +16,6 @@
     "admin:reset": "cd server && npm run admin:reset"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^10.0.6"
   }
 }
