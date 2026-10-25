@@ -46,9 +46,9 @@ async function seedDatabase({ force = false } = {}) {
     ['resume_education_title', 'Education Title', 'Mukesh Patel School of Technology Management & Engineering (MPSTME), NMIMS', 'resume'],
     ['resume_education_meta', 'Education Meta', "B.Tech Integrated in Computer Engineering // 2024 – 2029 (Mumbai, India)", 'resume'],
     ['resume_education_desc', 'Education Description', 'Specializing in Cybersecurity, Penetration Testing, Network Packet Analysis, DevSecOps pipelines, and Software Development.', 'resume'],
-    ['resume_skills_security', 'Resume Security Skills', 'Wireshark, Nessus, Kali Linux, Penetration Testing, Network Analysis, DevSecOps, Vulnerability Audits, SSL/TLS, TCP/IP.', 'resume'],
-    ['resume_skills_dev', 'Resume Development Skills', 'Python, Java, C/C++, Kotlin, PHP, JavaScript, React, Node.js, HTML5/CSS3, Bootstrap 5, REST APIs.', 'resume'],
-    ['resume_skills_db', 'Resume Database Skills', 'MySQL, MongoDB, Linux/Unix Internals, Data Structures & Algorithms, Pinecone Vector DB, Godot Engine.', 'resume'],
+    ['resume_skills_security', 'Resume Security Skills', 'Wireshark, Nessus, Kali Linux, Burp Suite, Network Protocols (TCP/IP, DNS), STRIDE Threat Modeling, Bandit & Semgrep SAST.', 'resume'],
+    ['resume_skills_dev', 'Resume Development Skills', 'C / C++, TypeScript, JavaScript (ESNext), Python 3, Java, Kotlin, PHP, Bash, SQL, HTML5 / CSS3, React, Node.js, Express, Flask, Vite, OpenGL, Win32 API, Monaco Editor API, Bootstrap.', 'resume'],
+    ['resume_skills_db', 'Resume Database Skills', 'PostgreSQL, MySQL, MongoDB, Git / GitHub Actions, Linux Systems Administration, REST APIs, Compiler Design, Procedural Generation, Anomaly Detection ML, RAG & LangGraph.', 'resume'],
     ['projects_label', 'Projects Section Label', 'Selected Work', 'projects'],
     ['projects_title', 'Projects Section Title', 'Projects', 'projects'],
     ['projects_desc', 'Projects Section Description', 'Tools, experiments, and builds across security and software engineering.', 'projects'],
@@ -67,28 +67,87 @@ async function seedDatabase({ force = false } = {}) {
   await db.run('DELETE FROM skills');
   await db.run('DELETE FROM skill_categories');
 
-  const cat1 = await db.run('INSERT INTO skill_categories (name, icon_color, display_order) VALUES (?, ?, ?)', ['Cybersecurity & Tools', 'var(--accent-cyan)', 1]);
-  const cat1Skills = ['Wireshark', 'Nessus', 'Kali Linux', 'Penetration Testing', 'Network Analysis', 'DevSecOps', 'Git', 'Bash CLI', 'MS Excel', 'Burp Suite'];
-  for (let i = 0; i < cat1Skills.length; i++) {
-    await db.run('INSERT INTO skills (category_id, name, display_order) VALUES (?, ?, ?)', [cat1.lastID, cat1Skills[i], i + 1]);
-  }
+  const skillDomains = [
+    {
+      name: 'Languages & Systems',
+      color: 'var(--accent-cyan)',
+      skills: [
+        'C / C++',
+        'TypeScript',
+        'JavaScript (ESNext)',
+        'Python 3',
+        'Java',
+        'Kotlin',
+        'PHP',
+        'Bash',
+        'SQL',
+        'HTML5 / CSS3'
+      ]
+    },
+    {
+      name: 'Cybersecurity & DevSecOps',
+      color: 'var(--accent-violet)',
+      skills: [
+        'Wireshark',
+        'Nessus',
+        'Kali Linux',
+        'Burp Suite',
+        'Network Protocols (TCP/IP, DNS)',
+        'STRIDE Threat Modeling',
+        'Bandit & Semgrep SAST'
+      ]
+    },
+    {
+      name: 'Frameworks & Runtimes',
+      color: 'var(--accent-green)',
+      skills: [
+        'React',
+        'Node.js',
+        'Express',
+        'Flask',
+        'Vite',
+        'OpenGL',
+        'Win32 API',
+        'Monaco Editor API',
+        'Bootstrap'
+      ]
+    },
+    {
+      name: 'Databases & Infrastructure',
+      color: 'var(--accent-amber)',
+      skills: [
+        'PostgreSQL',
+        'MySQL',
+        'MongoDB',
+        'Git / GitHub Actions',
+        'Linux Systems Administration',
+        'REST APIs'
+      ]
+    },
+    {
+      name: 'Specialized Concepts',
+      color: 'var(--accent-cyan)',
+      skills: [
+        'Compiler Design (Lexing, AST, Precedence Climbing)',
+        'Procedural Generation',
+        'Anomaly Detection ML',
+        'RAG & LangGraph'
+      ]
+    }
+  ];
 
-  const cat2 = await db.run('INSERT INTO skill_categories (name, icon_color, display_order) VALUES (?, ?, ?)', ['Languages & Web', 'var(--accent-violet)', 2]);
-  const cat2Skills = ['Python', 'Java', 'C / C++', 'Kotlin', 'PHP', 'JavaScript', 'React', 'Node.js', 'HTML / CSS', 'Bootstrap', 'REST APIs'];
-  for (let i = 0; i < cat2Skills.length; i++) {
-    await db.run('INSERT INTO skills (category_id, name, display_order) VALUES (?, ?, ?)', [cat2.lastID, cat2Skills[i], i + 1]);
-  }
-
-  const cat3 = await db.run('INSERT INTO skill_categories (name, icon_color, display_order) VALUES (?, ?, ?)', ['Databases & Core CS', 'var(--accent-green)', 3]);
-  const cat3Skills = ['MySQL', 'MongoDB', 'Data Structures & Algorithms', 'Network Protocols (TCP/IP, DNS)', 'Linux Systems'];
-  for (let i = 0; i < cat3Skills.length; i++) {
-    await db.run('INSERT INTO skills (category_id, name, display_order) VALUES (?, ?, ?)', [cat3.lastID, cat3Skills[i], i + 1]);
-  }
-
-  const cat4 = await db.run('INSERT INTO skill_categories (name, icon_color, display_order) VALUES (?, ?, ?)', ['Domains & Methods', 'var(--accent-amber)', 4]);
-  const cat4Skills = ['Vulnerability Assessment', 'UI/UX Prototyping', 'RAG & LangGraph', 'Pinecone Vector DB', 'Game QA & Godot'];
-  for (let i = 0; i < cat4Skills.length; i++) {
-    await db.run('INSERT INTO skills (category_id, name, display_order) VALUES (?, ?, ?)', [cat4.lastID, cat4Skills[i], i + 1]);
+  for (let i = 0; i < skillDomains.length; i++) {
+    const domain = skillDomains[i];
+    const cat = await db.run(
+      'INSERT INTO skill_categories (name, icon_color, display_order) VALUES (?, ?, ?)',
+      [domain.name, domain.color, i + 1]
+    );
+    for (let j = 0; j < domain.skills.length; j++) {
+      await db.run(
+        'INSERT INTO skills (category_id, name, display_order) VALUES (?, ?, ?)',
+        [cat.lastID, domain.skills[j], j + 1]
+      );
+    }
   }
 
   // 3. Certifications
