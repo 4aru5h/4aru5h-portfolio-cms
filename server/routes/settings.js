@@ -4,10 +4,10 @@ const { getDb } = require('../database/schema');
 const { requireAuth } = require('../middleware/auth');
 
 // Public: get all settings
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const db = getDb();
-    const settings = db.all('SELECT * FROM site_settings ORDER BY id ASC');
+    const settings = await db.all('SELECT * FROM site_settings ORDER BY id ASC');
     const dictionary = {};
     settings.forEach(s => {
       dictionary[s.setting_key] = s.setting_value;
@@ -20,7 +20,7 @@ router.get('/', (req, res) => {
 });
 
 // Admin: update setting
-router.put('/:key', requireAuth, (req, res) => {
+router.put('/:key', requireAuth, async (req, res) => {
   try {
     const value = req.body.setting_value ?? req.body.value;
     if (value === undefined) {
@@ -35,15 +35,15 @@ router.put('/:key', requireAuth, (req, res) => {
     }
 
     const db = getDb();
-    const existing = db.get('SELECT * FROM site_settings WHERE setting_key = ?', [req.params.key]);
+    const existing = await db.get('SELECT * FROM site_settings WHERE setting_key = ?', [req.params.key]);
 
     if (existing) {
-      db.run(
+      await db.run(
         'UPDATE site_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE setting_key = ?',
         [trimmedValue, req.params.key]
       );
     } else {
-      db.run(
+      await db.run(
         'INSERT INTO site_settings (setting_key, setting_value, label) VALUES (?, ?, ?)',
         [req.params.key, trimmedValue, req.params.key]
       );

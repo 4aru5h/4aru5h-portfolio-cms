@@ -13,6 +13,7 @@
     "admin:reset": "node database/reset-admin-password.js"
   },
   "dependencies": {
+    "@libsql/client": "^0.18.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^13.0.3",

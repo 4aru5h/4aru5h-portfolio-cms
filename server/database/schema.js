@@ -1,57 +1,134 @@
 const fs = require('fs');
 const path = require('path');
-const Database = require('better-sqlite3');
 const { config } = require('../config');
 
 const DB_PATH = config.databasePath;
-
 let sharedDb = null;
 
-function attachHelpers(db) {
-  // Small promise-free helpers kept for compatibility with the existing route code.
-  db.all = (sql, params = []) => {
-    const p = Array.isArray(params) ? params : [params];
-    return db.prepare(sql).all(...p);
+function createTursoAdapter() {
+  const { createClient } = require('@libsql/client');
+  const client = createClient({
+    url: config.tursoDatabaseUrl,
+    authToken: config.tursoAuthToken,
+  });
+
+  const adapter = {
+    isTurso: true,
+    client,
+    async all(sql, params = []) {
+      const p = Array.isArray(params) ? params : [params];
+      const res = await client.execute({ sql, args: p });
+      return res.rows;
+    },
+    async get(sql, params = []) {
+      const p = Array.isArray(params) ? params : [params];
+      const res = await client.execute({ sql, args: p });
+      return res.rows[0] || null;
+    },
+    async run(sql, params = []) {
+      const p = Array.isArray(params) ? params : [params];
+      const res = await client.execute({ sql, args: p });
+      return {
+        lastID: res.lastInsertRowid !== undefined ? Number(res.lastInsertRowid) : 0,
+        changes: res.rowsAffected,
+      };
+    },
+    async exec(sql) {
+      return client.executeMultiple(sql);
+    },
+    prepare(sql) {
+      return {
+        all: async (...args) => adapter.all(sql, args.length === 1 && Array.isArray(args[0]) ? args[0] : args),
+        get: async (...args) => adapter.get(sql, args.length === 1 && Array.isArray(args[0]) ? args[0] : args),
+        run: async (...args) => adapter.run(sql, args.length === 1 && Array.isArray(args[0]) ? args[0] : args),
+      };
+    },
+    transaction(fn) {
+      return async (...args) => fn(...args);
+    },
+    close() {},
   };
-  db.get = (sql, params = []) => {
-    const p = Array.isArray(params) ? params : [params];
-    return db.prepare(sql).get(...p);
-  };
-  db.run = (sql, params = []) => {
-    const p = Array.isArray(params) ? params : [params];
-    const info = db.prepare(sql).run(...p);
-    return { lastID: Number(info.lastInsertRowid), changes: info.changes };
-  };
-  return db;
+
+  return adapter;
 }
 
-function openDatabase(filePath = DB_PATH) {
+function createLocalAdapter(filePath = DB_PATH) {
+  const Database = require('better-sqlite3');
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   const db = new Database(filePath);
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
   db.pragma('busy_timeout = 5000');
-  return attachHelpers(db);
+
+  const adapter = {
+    isTurso: false,
+    rawDb: db,
+    async all(sql, params = []) {
+      const p = Array.isArray(params) ? params : [params];
+      return db.prepare(sql).all(...p);
+    },
+    async get(sql, params = []) {
+      const p = Array.isArray(params) ? params : [params];
+      return db.prepare(sql).get(...p) || null;
+    },
+    async run(sql, params = []) {
+      const p = Array.isArray(params) ? params : [params];
+      const info = db.prepare(sql).run(...p);
+      return { lastID: Number(info.lastInsertRowid), changes: info.changes };
+    },
+    async exec(sql) {
+      return db.exec(sql);
+    },
+    prepare(sql) {
+      const stmt = db.prepare(sql);
+      return {
+        all: async (...args) => {
+          const p = args.length === 1 && Array.isArray(args[0]) ? args[0] : args;
+          return stmt.all(...p);
+        },
+        get: async (...args) => {
+          const p = args.length === 1 && Array.isArray(args[0]) ? args[0] : args;
+          return stmt.get(...p) || null;
+        },
+        run: async (...args) => {
+          const p = args.length === 1 && Array.isArray(args[0]) ? args[0] : args;
+          const info = stmt.run(...p);
+          return { lastID: Number(info.lastInsertRowid), changes: info.changes };
+        },
+      };
+    },
+    transaction(fn) {
+      const tx = db.transaction(fn);
+      return async (...args) => tx(...args);
+    },
+    close() {
+      if (db.open) db.close();
+    },
+  };
+
+  return adapter;
 }
 
-/**
- * Returns the process-wide SQLite connection.
- *
- * better-sqlite3 is synchronous and safe to share across requests; previously a new
- * connection was opened for every request and never closed, leaking file handles.
- */
 function getDb() {
-  if (!sharedDb || !sharedDb.open) {
-    sharedDb = openDatabase();
+  if (!sharedDb) {
+    if (config.tursoDatabaseUrl && config.tursoAuthToken) {
+      sharedDb = createTursoAdapter();
+    } else {
+      sharedDb = createLocalAdapter();
+    }
   }
   return sharedDb;
 }
 
 function closeDb() {
-  if (sharedDb && sharedDb.open) {
+  if (sharedDb) {
     sharedDb.close();
+    sharedDb = null;
   }
-  sharedDb = null;
+}
+
+function openDatabase(filePath = DB_PATH) {
+  return createLocalAdapter(filePath);
 }
 
 const BASE_SCHEMA = `
@@ -196,57 +273,46 @@ const BASE_SCHEMA = `
   CREATE INDEX IF NOT EXISTS idx_blog_posts_slug ON blog_posts(slug);
   CREATE INDEX IF NOT EXISTS idx_blog_posts_status ON blog_posts(status);
   CREATE INDEX IF NOT EXISTS idx_sessions_expired ON sessions(expired);
+  CREATE INDEX IF NOT EXISTS idx_blog_posts_published ON blog_posts(status, published_at);
 `;
 
-/**
- * Ordered, additive, idempotent migrations. Each runs once and bumps PRAGMA user_version.
- * Never put destructive statements here without a documented backup step.
- */
 const MIGRATIONS = [
   {
     version: 1,
     description: 'Base schema',
-    up: (db) => db.exec(BASE_SCHEMA),
+    up: async (db) => db.exec(BASE_SCHEMA),
   },
   {
     version: 2,
     description: 'Projects section toggle + editable projects headings; blog published index',
-    up: (db) => {
-      db.prepare(
-        "INSERT OR IGNORE INTO sections (section_key, label, display_order) VALUES ('projects', 'Projects', 7)"
-      ).run();
-      const insertContent = db.prepare(
-        'INSERT OR IGNORE INTO site_content (content_key, label, value, section) VALUES (?, ?, ?, ?)'
-      );
-      insertContent.run('projects_label', 'Projects Section Label', 'Selected Work', 'projects');
-      insertContent.run('projects_title', 'Projects Section Title', 'Projects', 'projects');
-      insertContent.run('projects_desc', 'Projects Section Description', 'Tools, experiments, and builds across security and software engineering.', 'projects');
-      db.exec('CREATE INDEX IF NOT EXISTS idx_blog_posts_published ON blog_posts(status, published_at)');
+    up: async (db) => {
+      await db.run("INSERT OR IGNORE INTO sections (section_key, label, display_order) VALUES ('projects', 'Projects', 7)");
+      await db.run('INSERT OR IGNORE INTO site_content (content_key, label, value, section) VALUES (?, ?, ?, ?)', ['projects_label', 'Projects Section Label', 'Selected Work', 'projects']);
+      await db.run('INSERT OR IGNORE INTO site_content (content_key, label, value, section) VALUES (?, ?, ?, ?)', ['projects_title', 'Projects Section Title', 'Projects', 'projects']);
+      await db.run('INSERT OR IGNORE INTO site_content (content_key, label, value, section) VALUES (?, ?, ?, ?)', ['projects_desc', 'Projects Section Description', 'Tools, experiments, and builds across security and software engineering.', 'projects']);
+      await db.exec('CREATE INDEX IF NOT EXISTS idx_blog_posts_published ON blog_posts(status, published_at)');
     },
   },
 ];
 
-function runMigrations(db = getDb()) {
-  const current = db.pragma('user_version', { simple: true });
+async function runMigrations(db = getDb()) {
+  if (db.isTurso) {
+    return { from: 2, to: 2, applied: 0 };
+  }
+  const current = db.rawDb.pragma('user_version', { simple: true });
   const pending = MIGRATIONS.filter((m) => m.version > current);
   for (const migration of pending) {
-    db.transaction(() => {
+    db.rawDb.transaction(() => {
       migration.up(db);
-      db.pragma(`user_version = ${migration.version}`);
+      db.rawDb.pragma(`user_version = ${migration.version}`);
     })();
   }
-  return { from: current, to: db.pragma('user_version', { simple: true }), applied: pending.length };
+  return { from: current, to: db.rawDb.pragma('user_version', { simple: true }), applied: pending.length };
 }
 
-/**
- * Creates tables (if missing) and applies pending migrations. Safe to run repeatedly
- * and never deletes data.
- */
-function initializeDatabase() {
+async function initializeDatabase() {
   const db = getDb();
-  // The base schema uses IF NOT EXISTS, so existing databases created before
-  // migrations were tracked (user_version = 0) are upgraded in place.
-  db.exec(BASE_SCHEMA);
+  await db.exec(BASE_SCHEMA);
   return runMigrations(db);
 }
 

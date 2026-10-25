@@ -11,13 +11,13 @@ function calculateReadingTime(text) {
 }
 
 // Public: get published posts only
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 50);
     const offset = Math.max(parseInt(req.query.offset, 10) || 0, 0);
 
     const db = getDb();
-    const posts = db.all(
+    const posts = await db.all(
       'SELECT id, title, slug, excerpt, content, category, reading_time, published_at, created_at, tags FROM blog_posts WHERE status = ? ORDER BY published_at DESC LIMIT ? OFFSET ?',
       ['published', limit, offset]
     );
@@ -35,7 +35,7 @@ router.get('/', (req, res) => {
       };
     });
 
-    const countResult = db.get('SELECT COUNT(*) as count FROM blog_posts WHERE status = ?', ['published']);
+    const countResult = await db.get('SELECT COUNT(*) as count FROM blog_posts WHERE status = ?', ['published']);
 
     res.json({ data: { posts: parsed, total: countResult ? countResult.count : 0 } });
   } catch (err) {
@@ -45,10 +45,10 @@ router.get('/', (req, res) => {
 });
 
 // Public: get single published post by slug
-router.get('/post/:slug', (req, res) => {
+router.get('/post/:slug', async (req, res) => {
   try {
     const db = getDb();
-    const post = db.get('SELECT * FROM blog_posts WHERE slug = ? AND status = ?', [req.params.slug, 'published']);
+    const post = await db.get('SELECT * FROM blog_posts WHERE slug = ? AND status = ?', [req.params.slug, 'published']);
 
     if (!post) {
       return res.status(404).json({ error: 'Post not found' });
@@ -68,10 +68,10 @@ router.get('/post/:slug', (req, res) => {
 });
 
 // Admin: get all posts including drafts
-router.get('/all', requireAuth, (req, res) => {
+router.get('/all', requireAuth, async (req, res) => {
   try {
     const db = getDb();
-    const posts = db.all('SELECT id, title, slug, status, reading_time, created_at, published_at FROM blog_posts ORDER BY created_at DESC');
+    const posts = await db.all('SELECT id, title, slug, status, reading_time, created_at, published_at FROM blog_posts ORDER BY created_at DESC');
     res.json({ data: posts });
   } catch (err) {
     console.error('Error in GET /blog/all:', err);
@@ -80,10 +80,10 @@ router.get('/all', requireAuth, (req, res) => {
 });
 
 // Admin: get single post by id
-router.get('/admin/:id', requireAuth, (req, res) => {
+router.get('/admin/:id', requireAuth, async (req, res) => {
   try {
     const db = getDb();
-    const post = db.get('SELECT * FROM blog_posts WHERE id = ?', [req.params.id]);
+    const post = await db.get('SELECT * FROM blog_posts WHERE id = ?', [req.params.id]);
 
     if (!post) {
       return res.status(404).json({ error: 'Post not found' });
@@ -103,7 +103,7 @@ router.get('/admin/:id', requireAuth, (req, res) => {
 });
 
 // Admin: create post
-router.post('/', requireAuth, (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   try {
     const { title, slug: customSlug, excerpt, content, category, tags, status } = req.body;
     if (!title || typeof title !== 'string' || !title.trim()) {
@@ -119,7 +119,7 @@ router.post('/', requireAuth, (req, res) => {
     }
 
     const db = getDb();
-    const existing = db.get('SELECT id FROM blog_posts WHERE slug = ?', [slug]);
+    const existing = await db.get('SELECT id FROM blog_posts WHERE slug = ?', [slug]);
     if (existing) {
       slug = `${slug}-${Date.now().toString().slice(-4)}`;
     }
@@ -129,7 +129,7 @@ router.post('/', requireAuth, (req, res) => {
     const finalStatus = status === 'published' ? 'published' : 'draft';
     const publishedAt = finalStatus === 'published' ? new Date().toISOString() : null;
 
-    const result = db.run(
+    const result = await db.run(
       'INSERT INTO blog_posts (title, slug, excerpt, content, category, tags, status, reading_time, published_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [title.trim(), slug, excerpt || '', content || '', category || '', tagsJson, finalStatus, readingTime, publishedAt]
     );
@@ -142,12 +142,12 @@ router.post('/', requireAuth, (req, res) => {
 });
 
 // Admin: update post
-router.put('/:id', requireAuth, (req, res) => {
+router.put('/:id', requireAuth, async (req, res) => {
   try {
     const { title, slug: customSlug, excerpt, content, category, tags, status } = req.body;
     const db = getDb();
 
-    const post = db.get('SELECT * FROM blog_posts WHERE id = ?', [req.params.id]);
+    const post = await db.get('SELECT * FROM blog_posts WHERE id = ?', [req.params.id]);
     if (!post) {
       return res.status(404).json({ error: 'Post not found' });
     }
@@ -155,13 +155,13 @@ router.put('/:id', requireAuth, (req, res) => {
     let slug = post.slug;
     if (customSlug && customSlug.trim() && customSlug.trim() !== post.slug) {
       slug = slugify(customSlug.trim(), { lower: true, strict: true });
-      const existing = db.get('SELECT id FROM blog_posts WHERE slug = ? AND id != ?', [slug, req.params.id]);
+      const existing = await db.get('SELECT id FROM blog_posts WHERE slug = ? AND id != ?', [slug, req.params.id]);
       if (existing) {
         slug = `${slug}-${Date.now().toString().slice(-4)}`;
       }
     } else if (title && title.trim() !== post.title && !customSlug) {
       slug = slugify(title.trim(), { lower: true, strict: true });
-      const existing = db.get('SELECT id FROM blog_posts WHERE slug = ? AND id != ?', [slug, req.params.id]);
+      const existing = await db.get('SELECT id FROM blog_posts WHERE slug = ? AND id != ?', [slug, req.params.id]);
       if (existing) {
         slug = `${slug}-${Date.now().toString().slice(-4)}`;
       }
@@ -181,7 +181,7 @@ router.put('/:id', requireAuth, (req, res) => {
       publishedAt = null;
     }
 
-    db.run(
+    await db.run(
       'UPDATE blog_posts SET title = ?, slug = ?, excerpt = ?, content = ?, category = ?, tags = ?, status = ?, reading_time = ?, published_at = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
       [
         title !== undefined ? title.trim() : post.title,
@@ -205,11 +205,11 @@ router.put('/:id', requireAuth, (req, res) => {
 });
 
 // Admin: publish post
-router.put('/:id/publish', requireAuth, (req, res) => {
+router.put('/:id/publish', requireAuth, async (req, res) => {
   try {
     const db = getDb();
     const publishedAt = new Date().toISOString();
-    const result = db.run(
+    const result = await db.run(
       'UPDATE blog_posts SET status = ?, published_at = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
       ['published', publishedAt, req.params.id]
     );
@@ -224,10 +224,10 @@ router.put('/:id/publish', requireAuth, (req, res) => {
 });
 
 // Admin: unpublish post
-router.put('/:id/unpublish', requireAuth, (req, res) => {
+router.put('/:id/unpublish', requireAuth, async (req, res) => {
   try {
     const db = getDb();
-    const result = db.run(
+    const result = await db.run(
       'UPDATE blog_posts SET status = ?, published_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
       ['draft', req.params.id]
     );
@@ -242,10 +242,10 @@ router.put('/:id/unpublish', requireAuth, (req, res) => {
 });
 
 // Admin: delete post
-router.delete('/:id', requireAuth, (req, res) => {
+router.delete('/:id', requireAuth, async (req, res) => {
   try {
     const db = getDb();
-    const result = db.run('DELETE FROM blog_posts WHERE id = ?', [req.params.id]);
+    const result = await db.run('DELETE FROM blog_posts WHERE id = ?', [req.params.id]);
     if (result.changes === 0) {
       return res.status(404).json({ error: 'Post not found' });
     }

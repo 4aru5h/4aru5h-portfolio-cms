@@ -9,10 +9,10 @@ function serializeTags(tags) {
   return '[]';
 }
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const db = getDb();
-    const experiences = db.all('SELECT * FROM experiences WHERE is_visible = 1 ORDER BY display_order ASC, id ASC');
+    const experiences = await db.all('SELECT * FROM experiences WHERE is_visible = 1 ORDER BY display_order ASC, id ASC');
     res.json({ data: experiences });
   } catch (err) {
     console.error('Error in GET /experiences:', err);
@@ -20,10 +20,10 @@ router.get('/', (req, res) => {
   }
 });
 
-router.get('/all', requireAuth, (req, res) => {
+router.get('/all', requireAuth, async (req, res) => {
   try {
     const db = getDb();
-    const experiences = db.all('SELECT * FROM experiences ORDER BY display_order ASC, id ASC');
+    const experiences = await db.all('SELECT * FROM experiences ORDER BY display_order ASC, id ASC');
     res.json({ data: experiences });
   } catch (err) {
     console.error('Error in GET /experiences/all:', err);
@@ -31,7 +31,7 @@ router.get('/all', requireAuth, (req, res) => {
   }
 });
 
-router.post('/', requireAuth, (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   try {
     const { role, company, date_range, description, tags, is_visible, display_order } = req.body;
     if (!role || !company || !date_range) {
@@ -39,7 +39,7 @@ router.post('/', requireAuth, (req, res) => {
     }
 
     const db = getDb();
-    const result = db.run(
+    const result = await db.run(
       'INSERT INTO experiences (role, company, date_range, description, tags, is_visible, display_order) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [
         role.trim(),
@@ -58,16 +58,16 @@ router.post('/', requireAuth, (req, res) => {
   }
 });
 
-router.put('/:id', requireAuth, (req, res) => {
+router.put('/:id', requireAuth, async (req, res) => {
   try {
     const db = getDb();
-    const existing = db.get('SELECT * FROM experiences WHERE id = ?', [req.params.id]);
+    const existing = await db.get('SELECT * FROM experiences WHERE id = ?', [req.params.id]);
     if (!existing) {
       return res.status(404).json({ error: 'Experience not found' });
     }
 
     const { role, company, date_range, description, tags, is_visible, display_order } = req.body;
-    db.run(
+    await db.run(
       'UPDATE experiences SET role = ?, company = ?, date_range = ?, description = ?, tags = ?, is_visible = ?, display_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
       [
         role !== undefined ? role.trim() : existing.role,
@@ -87,10 +87,10 @@ router.put('/:id', requireAuth, (req, res) => {
   }
 });
 
-router.delete('/:id', requireAuth, (req, res) => {
+router.delete('/:id', requireAuth, async (req, res) => {
   try {
     const db = getDb();
-    const result = db.run('DELETE FROM experiences WHERE id = ?', [req.params.id]);
+    const result = await db.run('DELETE FROM experiences WHERE id = ?', [req.params.id]);
     if (result.changes === 0) {
       return res.status(404).json({ error: 'Experience not found' });
     }

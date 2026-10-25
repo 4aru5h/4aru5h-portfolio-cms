@@ -61,6 +61,8 @@ const config = {
   allowedOrigins: parseOrigins(process.env.CLIENT_URL),
   trustProxy: parseTrustProxy(process.env.TRUST_PROXY),
   databasePath,
+  tursoDatabaseUrl: isTest ? '' : (process.env.TURSO_DATABASE_URL || ''),
+  tursoAuthToken: isTest ? '' : (process.env.TURSO_AUTH_TOKEN || ''),
   // Sessions live next to the main database so a single persistent volume covers both.
   sessionDir: resolveFromRoot(process.env.SESSION_DB_DIR, path.dirname(databasePath)),
   clientDistDir: path.join(ROOT_DIR, 'client', 'dist'),
@@ -148,4 +150,3 @@ function isAllowedOrigin(origin, req) {
 }
 
 module.exports = { config, validateConfig, isAllowedOrigin };
-

@@ -69,10 +69,10 @@ router.post('/logout', (req, res) => {
 });
 
 // GET /api/auth/me
-router.get('/me', requireAuth, (req, res) => {
+router.get('/me', requireAuth, async (req, res) => {
   try {
     const db = getDb();
-    const user = db.get('SELECT id, username FROM admin_users WHERE id = ?', [req.session.userId]);
+    const user = await db.get('SELECT id, username FROM admin_users WHERE id = ?', [req.session.userId]);
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });

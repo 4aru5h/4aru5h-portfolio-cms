@@ -8,25 +8,25 @@ router.get('/stats', requireAuth, async (req, res) => {
   try {
     const db = getDb();
     
-    const skillsResult = db.get('SELECT COUNT(*) as count FROM skills');
-    const categoriesResult = db.get('SELECT COUNT(*) as count FROM skill_categories');
-    const certsResult = db.get('SELECT COUNT(*) as count FROM certifications');
-    const expResult = db.get('SELECT COUNT(*) as count FROM experiences');
-    const projectsResult = db.get('SELECT COUNT(*) as count FROM projects');
-    const publishedBlogResult = db.get('SELECT COUNT(*) as count FROM blog_posts WHERE status = ?', ['published']);
-    const draftBlogResult = db.get('SELECT COUNT(*) as count FROM blog_posts WHERE status = ?', ['draft']);
-    const contentResult = db.get('SELECT COUNT(*) as count FROM site_content');
+    const skillsResult = await db.get('SELECT COUNT(*) as count FROM skills');
+    const categoriesResult = await db.get('SELECT COUNT(*) as count FROM skill_categories');
+    const certsResult = await db.get('SELECT COUNT(*) as count FROM certifications');
+    const expResult = await db.get('SELECT COUNT(*) as count FROM experiences');
+    const projectsResult = await db.get('SELECT COUNT(*) as count FROM projects');
+    const publishedBlogResult = await db.get('SELECT COUNT(*) as count FROM blog_posts WHERE status = ?', ['published']);
+    const draftBlogResult = await db.get('SELECT COUNT(*) as count FROM blog_posts WHERE status = ?', ['draft']);
+    const contentResult = await db.get('SELECT COUNT(*) as count FROM site_content');
     
     res.json({
       data: {
-        skills: skillsResult.count,
-        categories: categoriesResult.count,
-        certifications: certsResult.count,
-        experiences: expResult.count,
-        projects: projectsResult.count,
-        publishedPosts: publishedBlogResult.count,
-        draftPosts: draftBlogResult.count,
-        contentItems: contentResult.count
+        skills: skillsResult ? skillsResult.count : 0,
+        categories: categoriesResult ? categoriesResult.count : 0,
+        certifications: certsResult ? certsResult.count : 0,
+        experiences: expResult ? expResult.count : 0,
+        projects: projectsResult ? projectsResult.count : 0,
+        publishedPosts: publishedBlogResult ? publishedBlogResult.count : 0,
+        draftPosts: draftBlogResult ? draftBlogResult.count : 0,
+        contentItems: contentResult ? contentResult.count : 0
       }
     });
   } catch (err) {

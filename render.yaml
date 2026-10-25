@@ -22,5 +22,7 @@ services:
         value: "1"
       - key: CLIENT_URL
         value: https://4aru5h.in,https://www.4aru5h.in,https://portfolio-cms-j40t.onrender.com
-
-
+      - key: TURSO_DATABASE_URL
+        value: libsql://portfolio-cms-4aru5h.aws-ap-south-1.turso.io
+      - key: TURSO_AUTH_TOKEN
+        value: eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3OTI5NDE3MjUsImlkIjoiMDFhMTczYTctMDcwMS03MjY4LWExYWMtNmM0MjVmMTMyZWNhIiwia2lkIjoiOE5jenVHOGJUWHVrbmlkUWlObzNlakxrajRZRHZtMWJWbHJGMkFmY2FHVSIsInJpZCI6ImQxN2UzYTZjLTE3ZGUtNGQ4Mi1iZmE5LWQ5YzE2Mzk3NjIwMSJ9.2i6TP8Tj8BtRtwy_yJPEIUpgHMA4PQPCX6XNyGEwwYyy1RXi22jAeE6YLV5sDPW5vt8jP9GTz6QRUBg9r8UaCA

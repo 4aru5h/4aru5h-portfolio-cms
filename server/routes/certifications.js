@@ -3,32 +3,32 @@ const router = express.Router();
 const { getDb } = require('../database/schema');
 const { requireAuth } = require('../middleware/auth');
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const db = getDb();
-    res.json({ data: db.all('SELECT * FROM certifications WHERE is_visible = 1 ORDER BY display_order ASC, id ASC') });
+    res.json({ data: await db.all('SELECT * FROM certifications WHERE is_visible = 1 ORDER BY display_order ASC, id ASC') });
   } catch (err) {
     console.error('Error in GET /certifications:', err);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
-router.get('/all', requireAuth, (req, res) => {
+router.get('/all', requireAuth, async (req, res) => {
   try {
     const db = getDb();
-    res.json({ data: db.all('SELECT * FROM certifications ORDER BY display_order ASC, id ASC') });
+    res.json({ data: await db.all('SELECT * FROM certifications ORDER BY display_order ASC, id ASC') });
   } catch (err) {
     console.error('Error in GET /certifications/all:', err);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
-router.post('/', requireAuth, (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   try {
     const { title, issuer, description, badge_text, icon_color, is_visible, display_order } = req.body;
     if (!title || !issuer) return res.status(400).json({ error: 'Title and issuer are required' });
     const db = getDb();
-    const result = db.run(
+    const result = await db.run(
       'INSERT INTO certifications (title, issuer, description, badge_text, icon_color, is_visible, display_order) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [
         title.trim(),
@@ -47,16 +47,16 @@ router.post('/', requireAuth, (req, res) => {
   }
 });
 
-router.put('/:id', requireAuth, (req, res) => {
+router.put('/:id', requireAuth, async (req, res) => {
   try {
     const db = getDb();
-    const existing = db.get('SELECT * FROM certifications WHERE id = ?', [req.params.id]);
+    const existing = await db.get('SELECT * FROM certifications WHERE id = ?', [req.params.id]);
     if (!existing) {
       return res.status(404).json({ error: 'Certification not found' });
     }
 
     const { title, issuer, description, badge_text, icon_color, is_visible, display_order } = req.body;
-    db.run(
+    await db.run(
       'UPDATE certifications SET title = ?, issuer = ?, description = ?, badge_text = ?, icon_color = ?, is_visible = ?, display_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
       [
         title !== undefined ? title.trim() : existing.title,
@@ -76,10 +76,10 @@ router.put('/:id', requireAuth, (req, res) => {
   }
 });
 
-router.delete('/:id', requireAuth, (req, res) => {
+router.delete('/:id', requireAuth, async (req, res) => {
   try {
     const db = getDb();
-    const result = db.run('DELETE FROM certifications WHERE id = ?', [req.params.id]);
+    const result = await db.run('DELETE FROM certifications WHERE id = ?', [req.params.id]);
     if (result.changes === 0) {
       return res.status(404).json({ error: 'Certification not found' });
     }

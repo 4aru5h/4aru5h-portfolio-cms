@@ -22,10 +22,10 @@ async function main() {
     console.log(`Backup written to ${backupFile}`);
   }
 
-  const migration = initializeDatabase();
+  const migration = await initializeDatabase();
   console.log(`Database ready at ${DB_PATH} (schema v${migration.to}, ${migration.applied} migration(s) applied).`);
 
-  const result = seedDatabase({ force });
+  const result = await seedDatabase({ force });
   console.log(result.seeded ? 'Seeded original portfolio content.' : result.reason);
 }
 

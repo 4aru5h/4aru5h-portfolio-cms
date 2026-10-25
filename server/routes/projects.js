@@ -14,10 +14,10 @@ function sanitizeUrl(url) {
 }
 
 // Public: get visible projects
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const db = getDb();
-    const projects = db.all('SELECT * FROM projects WHERE is_visible = 1 ORDER BY display_order ASC, id DESC');
+    const projects = await db.all('SELECT * FROM projects WHERE is_visible = 1 ORDER BY display_order ASC, id DESC');
     const parsed = projects.map(p => ({
       ...p,
       technologies: p.technologies ? (typeof p.technologies === 'string' ? JSON.parse(p.technologies) : p.technologies) : []
@@ -30,10 +30,10 @@ router.get('/', (req, res) => {
 });
 
 // Admin: get all
-router.get('/all', requireAuth, (req, res) => {
+router.get('/all', requireAuth, async (req, res) => {
   try {
     const db = getDb();
-    const projects = db.all('SELECT * FROM projects ORDER BY display_order ASC, id DESC');
+    const projects = await db.all('SELECT * FROM projects ORDER BY display_order ASC, id DESC');
     const parsed = projects.map(p => ({
       ...p,
       technologies: p.technologies ? (typeof p.technologies === 'string' ? JSON.parse(p.technologies) : p.technologies) : []
@@ -46,7 +46,7 @@ router.get('/all', requireAuth, (req, res) => {
 });
 
 // Admin: create
-router.post('/', requireAuth, (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   try {
     const { title, description, image_url, live_url, github_url, technologies, is_visible, display_order } = req.body;
     if (!title || typeof title !== 'string' || !title.trim()) {
@@ -59,7 +59,7 @@ router.post('/', requireAuth, (req, res) => {
     const techJson = JSON.stringify(techArray);
 
     const db = getDb();
-    const result = db.run(
+    const result = await db.run(
       'INSERT INTO projects (title, description, image_url, live_url, github_url, technologies, is_visible, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [
         title.trim(),
@@ -80,10 +80,10 @@ router.post('/', requireAuth, (req, res) => {
 });
 
 // Admin: update
-router.put('/:id', requireAuth, (req, res) => {
+router.put('/:id', requireAuth, async (req, res) => {
   try {
     const db = getDb();
-    const existing = db.get('SELECT * FROM projects WHERE id = ?', [req.params.id]);
+    const existing = await db.get('SELECT * FROM projects WHERE id = ?', [req.params.id]);
     if (!existing) {
       return res.status(404).json({ error: 'Project not found' });
     }
@@ -103,7 +103,7 @@ router.put('/:id', requireAuth, (req, res) => {
       techJson = JSON.stringify(techArray);
     }
 
-    db.run(
+    await db.run(
       'UPDATE projects SET title = ?, description = ?, image_url = ?, live_url = ?, github_url = ?, technologies = ?, is_visible = ?, display_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
       [
         newTitle,
@@ -125,10 +125,10 @@ router.put('/:id', requireAuth, (req, res) => {
 });
 
 // Admin: delete
-router.delete('/:id', requireAuth, (req, res) => {
+router.delete('/:id', requireAuth, async (req, res) => {
   try {
     const db = getDb();
-    const result = db.run('DELETE FROM projects WHERE id = ?', [req.params.id]);
+    const result = await db.run('DELETE FROM projects WHERE id = ?', [req.params.id]);
     if (result.changes === 0) {
       return res.status(404).json({ error: 'Project not found' });
     }

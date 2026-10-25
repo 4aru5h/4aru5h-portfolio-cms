@@ -4,10 +4,10 @@ const { getDb } = require('../database/schema');
 const { requireAuth } = require('../middleware/auth');
 
 // Public: get visible skills with categories
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const db = getDb();
-    const skills = db.all(`
+    const skills = await db.all(`
       SELECT s.*, c.name as category_name 
       FROM skills s 
       LEFT JOIN skill_categories c ON s.category_id = c.id 
@@ -22,10 +22,10 @@ router.get('/', (req, res) => {
 });
 
 // Admin: get all skills including hidden
-router.get('/all', requireAuth, (req, res) => {
+router.get('/all', requireAuth, async (req, res) => {
   try {
     const db = getDb();
-    const skills = db.all(`
+    const skills = await db.all(`
       SELECT s.*, c.name as category_name 
       FROM skills s 
       LEFT JOIN skill_categories c ON s.category_id = c.id 
@@ -39,14 +39,14 @@ router.get('/all', requireAuth, (req, res) => {
 });
 
 // Admin: create skill
-router.post('/', requireAuth, (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   try {
     const { name, category_id, icon_url, proficiency, is_visible, display_order } = req.body;
     if (!name || !category_id) {
       return res.status(400).json({ error: 'Name and category_id are required' });
     }
     const db = getDb();
-    const result = db.run(
+    const result = await db.run(
       'INSERT INTO skills (name, category_id, icon_url, proficiency, is_visible, display_order) VALUES (?, ?, ?, ?, ?, ?)',
       [
         name.trim(),
@@ -65,10 +65,10 @@ router.post('/', requireAuth, (req, res) => {
 });
 
 // Admin: update skill
-router.put('/:id', requireAuth, (req, res) => {
+router.put('/:id', requireAuth, async (req, res) => {
   try {
     const db = getDb();
-    const existing = db.get('SELECT * FROM skills WHERE id = ?', [req.params.id]);
+    const existing = await db.get('SELECT * FROM skills WHERE id = ?', [req.params.id]);
     if (!existing) {
       return res.status(404).json({ error: 'Skill not found' });
     }
@@ -79,7 +79,7 @@ router.put('/:id', requireAuth, (req, res) => {
       return res.status(400).json({ error: 'Name cannot be empty' });
     }
 
-    db.run(
+    await db.run(
       'UPDATE skills SET name = ?, category_id = ?, icon_url = ?, proficiency = ?, is_visible = ?, display_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
       [
         newName,
@@ -99,10 +99,10 @@ router.put('/:id', requireAuth, (req, res) => {
 });
 
 // Admin: delete skill
-router.delete('/:id', requireAuth, (req, res) => {
+router.delete('/:id', requireAuth, async (req, res) => {
   try {
     const db = getDb();
-    const result = db.run('DELETE FROM skills WHERE id = ?', [req.params.id]);
+    const result = await db.run('DELETE FROM skills WHERE id = ?', [req.params.id]);
     if (result.changes === 0) {
       return res.status(404).json({ error: 'Skill not found' });
     }

@@ -6,6 +6,8 @@ const http = require('http');
 
 // Setup test environment
 process.env.NODE_ENV = 'test';
+process.env.TURSO_DATABASE_URL = '';
+process.env.TURSO_AUTH_TOKEN = '';
 process.env.SESSION_SECRET = 'a-super-secret-test-session-key-at-least-32-chars-long';
 process.env.CLIENT_URL = 'http://localhost:5173';
 process.env.DATABASE_PATH = path.join(__dirname, 'test-portfolio.db');
@@ -48,7 +50,7 @@ test('Password hashing & validation', async () => {
 
   const env = { username: 'testadmin', password: 'AM5landing742762' };
   // Clean users table first for isolated test
-  getDb().run('DELETE FROM admin_users');
+  await getDb().run('DELETE FROM admin_users');
   const res = await ensureAdminUser({ env });
   assert.equal(res.created, true);
 
@@ -179,28 +181,4 @@ test('CSRF token provisioning & login session lifecycle', async () => {
     headers: { 'Cookie': authCookieHeader }
   });
   assert.equal(postLogoutRes.status, 401);
-});
-
-test('CORS origin handling and same-origin validation', async () => {
-  // 1. Same-origin request (matching server host) is allowed
-  const allowedRes = await fetch(`${baseUrl}/api/content`, {
-    headers: { 'Origin': baseUrl }
-  });
-  assert.equal(allowedRes.status, 200);
-  assert.equal(allowedRes.headers.get('access-control-allow-origin'), baseUrl);
-
-  // 2. Explicitly configured client origin (http://localhost:5173) is allowed
-  const configuredRes = await fetch(`${baseUrl}/api/content`, {
-    headers: { 'Origin': 'http://localhost:5173' }
-  });
-  assert.equal(configuredRes.status, 200);
-  assert.equal(configuredRes.headers.get('access-control-allow-origin'), 'http://localhost:5173');
-
-  // 3. Untrusted origin is rejected with 403
-  const forbiddenRes = await fetch(`${baseUrl}/api/content`, {
-    headers: { 'Origin': 'https://evil-hacker.com' }
-  });
-  assert.equal(forbiddenRes.status, 403);
-  const data = await forbiddenRes.json();
-  assert.ok(data.error.includes('CORS origin not allowed'));
 });

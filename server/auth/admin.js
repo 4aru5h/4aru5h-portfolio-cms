@@ -66,7 +66,7 @@ async function verifyCredentials(username, password) {
   }
 
   const db = getDb();
-  const user = db.get('SELECT id, username, password_hash FROM admin_users WHERE username = ?', [username]);
+  const user = await db.get('SELECT id, username, password_hash FROM admin_users WHERE username = ?', [username]);
   const hash = user ? user.password_hash : await getDummyHash();
   const valid = await bcrypt.compare(password, hash);
   if (!user || !valid) return null;
@@ -74,7 +74,7 @@ async function verifyCredentials(username, password) {
   if (needsRehash(user.password_hash)) {
     // Transparently upgrade older hashes (e.g. cost 10 from the previous setup script).
     const upgraded = await hashPassword(password);
-    db.run('UPDATE admin_users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [upgraded, user.id]);
+    await db.run('UPDATE admin_users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [upgraded, user.id]);
   }
   return { id: user.id, username: user.username };
 }
@@ -92,7 +92,8 @@ function readAdminEnv() {
  */
 async function ensureAdminUser({ env = readAdminEnv() } = {}) {
   const db = getDb();
-  const count = db.get('SELECT COUNT(*) AS count FROM admin_users').count;
+  const userCount = await db.get('SELECT COUNT(*) AS count FROM admin_users');
+  const count = userCount ? userCount.count : 0;
   if (count > 0) return { created: false, reason: 'exists' };
 
   if (!env.username || !env.password) {
@@ -106,7 +107,7 @@ async function ensureAdminUser({ env = readAdminEnv() } = {}) {
   }
 
   const hash = await hashPassword(env.password);
-  db.run('INSERT INTO admin_users (username, password_hash) VALUES (?, ?)', [env.username, hash]);
+  await db.run('INSERT INTO admin_users (username, password_hash) VALUES (?, ?)', [env.username, hash]);
   return { created: true, username: env.username };
 }
 
@@ -123,9 +124,9 @@ async function resetAdminPassword({ env = readAdminEnv() } = {}) {
 
   const db = getDb();
   const hash = await hashPassword(env.password);
-  const existing = db.get('SELECT id FROM admin_users WHERE username = ?', [env.username]);
+  const existing = await db.get('SELECT id FROM admin_users WHERE username = ?', [env.username]);
   if (existing) {
-    db.run('UPDATE admin_users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [hash, existing.id]);
+    await db.run('UPDATE admin_users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [hash, existing.id]);
     return { action: 'updated', username: env.username };
   }
   db.run('INSERT INTO admin_users (username, password_hash) VALUES (?, ?)', [env.username, hash]);

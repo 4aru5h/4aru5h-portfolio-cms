@@ -4,10 +4,10 @@ const { getDb } = require('../database/schema');
 const { requireAuth } = require('../middleware/auth');
 
 // Public: get visible sections
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const db = getDb();
-    const sections = db.all('SELECT * FROM sections ORDER BY display_order ASC, id ASC');
+    const sections = await db.all('SELECT * FROM sections ORDER BY display_order ASC, id ASC');
     res.json({ data: sections });
   } catch (err) {
     console.error('Error in GET /sections:', err);
@@ -16,14 +16,14 @@ router.get('/', (req, res) => {
 });
 
 // Admin: toggle visibility or update
-router.put('/:id', requireAuth, (req, res) => {
+router.put('/:id', requireAuth, async (req, res) => {
   try {
     const { is_visible } = req.body;
     if (is_visible === undefined) {
       return res.status(400).json({ error: 'is_visible is required' });
     }
     const db = getDb();
-    const result = db.run('UPDATE sections SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [is_visible ? 1 : 0, req.params.id]);
+    const result = await db.run('UPDATE sections SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [is_visible ? 1 : 0, req.params.id]);
     if (result.changes === 0) {
       return res.status(404).json({ error: 'Section not found' });
     }

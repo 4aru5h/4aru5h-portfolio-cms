@@ -4,10 +4,10 @@ const { getDb } = require('../database/schema');
 const { requireAuth } = require('../middleware/auth');
 
 // Public: get visible nav items
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const db = getDb();
-    const navItems = db.all('SELECT * FROM navigation_items WHERE is_visible = 1 ORDER BY display_order ASC, id ASC');
+    const navItems = await db.all('SELECT * FROM navigation_items WHERE is_visible = 1 ORDER BY display_order ASC, id ASC');
     res.json({ data: navItems });
   } catch (err) {
     console.error('Error in GET /navigation:', err);
@@ -16,10 +16,10 @@ router.get('/', (req, res) => {
 });
 
 // Admin: get all
-router.get('/all', requireAuth, (req, res) => {
+router.get('/all', requireAuth, async (req, res) => {
   try {
     const db = getDb();
-    const navItems = db.all('SELECT * FROM navigation_items ORDER BY display_order ASC, id ASC');
+    const navItems = await db.all('SELECT * FROM navigation_items ORDER BY display_order ASC, id ASC');
     res.json({ data: navItems });
   } catch (err) {
     console.error('Error in GET /navigation/all:', err);
@@ -28,10 +28,10 @@ router.get('/all', requireAuth, (req, res) => {
 });
 
 // Admin: update
-router.put('/:id', requireAuth, (req, res) => {
+router.put('/:id', requireAuth, async (req, res) => {
   try {
     const db = getDb();
-    const existing = db.get('SELECT * FROM navigation_items WHERE id = ?', [req.params.id]);
+    const existing = await db.get('SELECT * FROM navigation_items WHERE id = ?', [req.params.id]);
     if (!existing) {
       return res.status(404).json({ error: 'Navigation item not found' });
     }
@@ -49,7 +49,7 @@ router.put('/:id', requireAuth, (req, res) => {
       return res.status(400).json({ error: 'Invalid URL scheme' });
     }
 
-    db.run(
+    await db.run(
       'UPDATE navigation_items SET label = ?, href = ?, is_visible = ?, display_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
       [
         newLabel,
@@ -67,7 +67,7 @@ router.put('/:id', requireAuth, (req, res) => {
 });
 
 // Admin: create navigation item
-router.post('/', requireAuth, (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   try {
     const { label, href, is_visible, display_order } = req.body;
     if (!label || typeof label !== 'string' || !label.trim()) {
@@ -81,7 +81,7 @@ router.post('/', requireAuth, (req, res) => {
       return res.status(400).json({ error: 'Invalid URL scheme' });
     }
     const db = getDb();
-    const result = db.run(
+    const result = await db.run(
       'INSERT INTO navigation_items (label, href, is_visible, display_order) VALUES (?, ?, ?, ?)',
       [
         label.trim(),
@@ -98,14 +98,14 @@ router.post('/', requireAuth, (req, res) => {
 });
 
 // Admin: delete navigation item
-router.delete('/:id', requireAuth, (req, res) => {
+router.delete('/:id', requireAuth, async (req, res) => {
   try {
     const db = getDb();
-    const existing = db.get('SELECT * FROM navigation_items WHERE id = ?', [req.params.id]);
+    const existing = await db.get('SELECT * FROM navigation_items WHERE id = ?', [req.params.id]);
     if (!existing) {
       return res.status(404).json({ error: 'Navigation item not found' });
     }
-    db.run('DELETE FROM navigation_items WHERE id = ?', [req.params.id]);
+    await db.run('DELETE FROM navigation_items WHERE id = ?', [req.params.id]);
     res.json({ data: { message: 'Navigation item deleted successfully' } });
   } catch (err) {
     console.error('Error in DELETE /navigation/:id:', err);

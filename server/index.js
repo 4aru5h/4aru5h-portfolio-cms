@@ -2,7 +2,7 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const session = require('express-session');
-const SQLiteStore = require('connect-sqlite3')(session);
+// SQLiteStore loaded dynamically below
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const fs = require('fs');
@@ -16,20 +16,19 @@ const { csrfProtection } = require('./middleware/csrf');
 validateConfig();
 
 // Initialize database schema & migrations
-initializeDatabase();
-
-// Auto-seed default portfolio content if database is brand new (non-destructive)
-try {
-  const { seedDatabase } = require('./database/seed');
-  seedDatabase();
-} catch (err) {
-  console.warn('Auto-seed check skipped or encountered issue:', err.message);
-}
-
-// Bootstrap initial admin if credentials exist in .env and table is empty
-ensureAdminUser().catch((err) => {
-  console.warn('Admin user auto-initialization skipped or encountered issue:', err.message);
-});
+initializeDatabase()
+  .then(async () => {
+    try {
+      const { seedDatabase } = require('./database/seed');
+      await seedDatabase();
+    } catch (err) {
+      console.warn('Auto-seed check skipped or encountered issue:', err.message);
+    }
+    await ensureAdminUser();
+  })
+  .catch((err) => {
+    console.warn('Database initialization warning:', err.message);
+  });
 
 // Route imports
 const authRoutes = require('./routes/auth');
@@ -96,11 +95,19 @@ if (!fs.existsSync(config.sessionDir)) {
 }
 
 // Session Configuration
-app.use(session({
-  store: new SQLiteStore({
+let sessionStore;
+try {
+  const SQLiteStore = require('connect-sqlite3')(session);
+  sessionStore = new SQLiteStore({
     dir: config.sessionDir,
     db: 'sessions.db'
-  }),
+  });
+} catch (e) {
+  // MemoryStore fallback
+}
+
+app.use(session({
+  store: sessionStore,
   secret: config.sessionSecret,
   resave: false,
   saveUninitialized: false,

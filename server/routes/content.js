@@ -7,7 +7,7 @@ const { requireAuth } = require('../middleware/auth');
 router.get('/', async (req, res) => {
   try {
     const db = getDb();
-    const content = db.all('SELECT * FROM site_content ORDER BY section ASC, display_order ASC');
+    const content = await db.all('SELECT * FROM site_content ORDER BY section ASC, display_order ASC');
     
     const dictionary = {};
     const grouped = {};
@@ -31,7 +31,7 @@ router.get('/', async (req, res) => {
 router.get('/:key', async (req, res) => {
   try {
     const db = getDb();
-    const item = db.get('SELECT * FROM site_content WHERE content_key = ?', [req.params.key]);
+    const item = await db.get('SELECT * FROM site_content WHERE content_key = ?', [req.params.key]);
     if (!item) {
       return res.status(404).json({ error: 'Content not found' });
     }
@@ -51,9 +51,9 @@ router.put('/:id', requireAuth, async (req, res) => {
     }
     const db = getDb();
     if (label !== undefined) {
-      db.run('UPDATE site_content SET value = ?, label = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [value, label, req.params.id]);
+      await db.run('UPDATE site_content SET value = ?, label = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [value, label, req.params.id]);
     } else {
-      db.run('UPDATE site_content SET value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [value, req.params.id]);
+      await db.run('UPDATE site_content SET value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [value, req.params.id]);
     }
     res.json({ data: { message: 'Content updated successfully' } });
   } catch (err) {
@@ -70,7 +70,7 @@ router.post('/', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Section, content_key, label, and value are required' });
     }
     const db = getDb();
-    const result = db.run(
+    const result = await db.run(
       'INSERT INTO site_content (section, content_key, label, value, content_type) VALUES (?, ?, ?, ?, ?)',
       [section, content_key, label, value, content_type || 'text']
     );
@@ -85,7 +85,7 @@ router.post('/', requireAuth, async (req, res) => {
 router.delete('/:id', requireAuth, async (req, res) => {
   try {
     const db = getDb();
-    db.run('DELETE FROM site_content WHERE id = ?', [req.params.id]);
+    await db.run('DELETE FROM site_content WHERE id = ?', [req.params.id]);
     res.json({ data: { message: 'Content deleted successfully' } });
   } catch (err) {
     console.error(err);
