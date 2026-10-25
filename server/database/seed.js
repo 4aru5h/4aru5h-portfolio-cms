@@ -113,7 +113,7 @@ async function seedDatabase({ force = false } = {}) {
       ]
     },
     {
-      name: 'Databases & Infrastructure',
+      name: 'Databases, Infra & Specialized Concepts',
       color: 'var(--accent-amber)',
       skills: [
         'PostgreSQL',
@@ -121,13 +121,7 @@ async function seedDatabase({ force = false } = {}) {
         'MongoDB',
         'Git / GitHub Actions',
         'Linux Systems Administration',
-        'REST APIs'
-      ]
-    },
-    {
-      name: 'Specialized Concepts',
-      color: 'var(--accent-cyan)',
-      skills: [
+        'REST APIs',
         'Compiler Design (Lexing, AST, Precedence Climbing)',
         'Procedural Generation',
         'Anomaly Detection ML',
