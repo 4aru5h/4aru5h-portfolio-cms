@@ -80,7 +80,6 @@ async function seedDatabase({ force = false } = {}) {
         'Kotlin',
         'PHP',
         'Bash',
-        'SQL',
         'HTML5 / CSS3'
       ]
     },
@@ -94,7 +93,9 @@ async function seedDatabase({ force = false } = {}) {
         'Burp Suite',
         'Network Protocols (TCP/IP, DNS)',
         'STRIDE Threat Modeling',
-        'Bandit & Semgrep SAST'
+        'Bandit & Semgrep SAST',
+        'Git / GitHub Actions',
+        'Anomaly Detection ML'
       ]
     },
     {
@@ -113,18 +114,17 @@ async function seedDatabase({ force = false } = {}) {
       ]
     },
     {
-      name: 'Databases, Infra & Specialized Concepts',
+      name: 'Databases & Specialized Concepts',
       color: 'var(--accent-amber)',
       skills: [
         'PostgreSQL',
         'MySQL',
         'MongoDB',
-        'Git / GitHub Actions',
+        'SQL',
         'Linux Systems Administration',
         'REST APIs',
         'Compiler Design (Lexing, AST, Precedence Climbing)',
         'Procedural Generation',
-        'Anomaly Detection ML',
         'RAG & LangGraph'
       ]
     }
