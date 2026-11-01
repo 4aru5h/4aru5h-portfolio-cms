@@ -211,6 +211,20 @@ async function seedDatabase({ force = false } = {}) {
     await db.run('INSERT OR REPLACE INTO site_settings (setting_key, setting_value, setting_type, label) VALUES (?, ?, ?, ?)', s);
   }
 
+  // 8. Projects
+  const existingProjects = await db.get('SELECT COUNT(*) AS count FROM projects');
+  if (force || !existingProjects || existingProjects.count === 0) {
+    await db.run('DELETE FROM projects');
+    const defaultProjects = [
+      ['Cybersecurity Automation and Intelligent Threat Detection', 'Developed a cybersecurity project focused on automating security workflows and leveraging intelligent threat detection techniques to identify and respond to potential cyber threats more efficiently.', JSON.stringify(['Python', 'Scikit-learn', 'Flask', 'Nmap', 'Nessus']), 'https://github.com/4aru5h/Cybersecurity-Automation-And-Intelligent-Threat-Detection', '', '', 1, 1],
+      ['boltlang', 'Created Bolt, a custom programming language built with TypeScript, exploring language design and implementation to define its syntax and core functionality.', JSON.stringify(['Compiler Design', 'Lexical Analysis', 'Parsing', 'Programming Language Design', 'TypeScript']), 'https://github.com/4aru5h/bolt-lang', 'boltlang.vercel.app', '', 2, 1],
+      ['SNS Vocal Pitch Corrector', 'Studio-grade digital vocal pitch correction (AutoTune) workstation engineered in 100% Base MATLAB using YIN pitch tracking, decision-directed Wiener spectral denoising, zero-phase Butterworth conditioning, and TD-PSOLA resynthesis.', JSON.stringify(['MATLAB', 'Digital Signal Processing', 'Audio Engineering', 'Signals & Systems', 'YIN Algorithm', 'TD-PSOLA']), 'https://github.com/4aru5h/sns-vocal-pitch-corrector', '', '', 3, 1]
+    ];
+    for (const p of defaultProjects) {
+      await db.run('INSERT INTO projects (title, description, technologies, github_url, live_url, image_url, display_order, is_visible) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', p);
+    }
+  }
+
   return { seeded: true };
 }
 
