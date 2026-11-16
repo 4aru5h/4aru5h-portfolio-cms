@@ -1,29 +1,29 @@
 {
-  "name": "portfolio-cms-client",
+  "name": "4aru5h-aspen",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Dark-first Swiss architectural engineering portfolio for Aarush Sharma (4aru5h).",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint \"src/**/*.{js,jsx}\"",
-    "preview": "vite preview"
+    "dev": "vite --host",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 4173 --host"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "^4.2.1",
-    "dompurify": "^3.4.16",
-    "marked": "^18.1.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.30.6",
-    "vite": "^5.2.0"
+    "@fontsource-variable/archivo": "^5.2.5",
+    "@fontsource-variable/jetbrains-mono": "^5.2.5",
+    "@fontsource-variable/schibsted-grotesk": "^5.2.5",
+    "jspdf": "^4.2.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
-    "@types/react": "^18.2.66",
-    "@types/react-dom": "^18.2.22",
-    "eslint": "^8.57.0",
-    "eslint-plugin-react": "^7.34.1",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.6"
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.8.2",
+    "vite": "^6.2.2"
   }
 }
