@@ -1144,6 +1144,8 @@ main {
 }
 
 .intro-tags {
+  max-width: 34ch;
+  text-align: right;
   font-family: var(--f-mono);
   font-size: 12px;
   letter-spacing: 0.12em;
@@ -3307,8 +3309,9 @@ html.fx-seams .ledger-left {
     font-size: 9.6vw;
   }
 
+  /* "4aru5h" is ~3.64em wide: 24vw is the most that fits inside the phone padding */
   .intro-word {
-    font-size: 38vw;
+    font-size: 24vw;
   }
 
   .intro-hide-sm {
