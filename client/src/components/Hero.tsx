@@ -29,7 +29,7 @@ export function Hero() {
         <div className="cell hero-poster">
           <p className="hero-poster-meta" data-enter style={d(0)}>
             <span>Portfolio · {new Date().getFullYear()}</span>
-            <span className="hero-poster-tags">Security · Systems · Compilers</span>
+            <span className="hero-poster-tags">Security Engineering · Pentesting</span>
           </p>
           <div className="px" data-px="-90" data-pfrom="top">
             <p className="poster-word" aria-label={IDENTITY.handle}>

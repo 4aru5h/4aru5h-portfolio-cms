@@ -80,7 +80,7 @@ export function Intro() {
         </p>
         <div className="intro-foot">
           <span className="intro-count">{String(count).padStart(3, '0')}</span>
-          <span className="intro-tags">Security · Systems · Compilers</span>
+          <span className="intro-tags">Security Engineering · Pentesting</span>
         </div>
         <span className="intro-bar" style={{ transform: `scaleX(${count / 100})` }} />
       </div>
